@@ -1,0 +1,9 @@
+name: O Stats
+description: Adds O stats to the stats page
+version: 1.0
+url: https://github.com/sanjiswe/stash_ostats
+ui:
+  requires:
+    - CommunityScriptsUILibrary
+  javascript:
+    - ostats.js
