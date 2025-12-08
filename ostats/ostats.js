@@ -521,6 +521,79 @@
     barsContainer.style.gap = '4px'
     chartContainer.appendChild(barsContainer)
 
+    // Create month navigation (initially hidden)
+    const monthNavContainer = document.createElement('div')
+    monthNavContainer.style.display = 'none'
+    monthNavContainer.style.justifyContent = 'center'
+    monthNavContainer.style.alignItems = 'center'
+    monthNavContainer.style.gap = '1rem'
+    monthNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(monthNavContainer)
+
+    const prevMonthBtn = document.createElement('button')
+    prevMonthBtn.innerText = '← Prev'
+    prevMonthBtn.style.padding = '0.25rem 0.75rem'
+    prevMonthBtn.style.cursor = 'pointer'
+    prevMonthBtn.style.border = '1px solid #555'
+    prevMonthBtn.style.backgroundColor = 'transparent'
+    prevMonthBtn.style.color = '#fff'
+    prevMonthBtn.style.borderRadius = '4px'
+    monthNavContainer.appendChild(prevMonthBtn)
+
+    const monthLabel = document.createElement('span')
+    monthLabel.style.fontSize = '1rem'
+    monthLabel.style.fontWeight = 'bold'
+    monthNavContainer.appendChild(monthLabel)
+
+    const nextMonthBtn = document.createElement('button')
+    nextMonthBtn.innerText = 'Next →'
+    nextMonthBtn.style.padding = '0.25rem 0.75rem'
+    nextMonthBtn.style.cursor = 'pointer'
+    nextMonthBtn.style.border = '1px solid #555'
+    nextMonthBtn.style.backgroundColor = 'transparent'
+    nextMonthBtn.style.color = '#fff'
+    nextMonthBtn.style.borderRadius = '4px'
+    monthNavContainer.appendChild(nextMonthBtn)
+
+    // Create year navigation (initially hidden)
+    const yearNavContainer = document.createElement('div')
+    yearNavContainer.style.display = 'none'
+    yearNavContainer.style.justifyContent = 'center'
+    yearNavContainer.style.alignItems = 'center'
+    yearNavContainer.style.gap = '1rem'
+    yearNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(yearNavContainer)
+
+    const prevYearBtn = document.createElement('button')
+    prevYearBtn.innerText = '\u2190 Prev'
+    prevYearBtn.style.padding = '0.25rem 0.75rem'
+    prevYearBtn.style.cursor = 'pointer'
+    prevYearBtn.style.border = '1px solid #555'
+    prevYearBtn.style.backgroundColor = 'transparent'
+    prevYearBtn.style.color = '#fff'
+    prevYearBtn.style.borderRadius = '4px'
+    yearNavContainer.appendChild(prevYearBtn)
+
+    const yearLabel = document.createElement('span')
+    yearLabel.style.fontSize = '1rem'
+    yearLabel.style.fontWeight = 'bold'
+    yearNavContainer.appendChild(yearLabel)
+
+    const nextYearBtn = document.createElement('button')
+    nextYearBtn.innerText = 'Next \u2192'
+    nextYearBtn.style.padding = '0.25rem 0.75rem'
+    nextYearBtn.style.cursor = 'pointer'
+    nextYearBtn.style.border = '1px solid #555'
+    nextYearBtn.style.backgroundColor = 'transparent'
+    nextYearBtn.style.color = '#fff'
+    nextYearBtn.style.borderRadius = '4px'
+    yearNavContainer.appendChild(nextYearBtn)
+
+    // Track selected month (0 = current month, -1 = prev month, etc.)
+    let selectedMonthOffset = 0
+    // Track selected year (0 = current year, -1 = prev year, etc.)
+    let selectedYearOffset = 0
+
     // Function to render chart
     function renderChart(view) {
       // Update button styles
@@ -536,6 +609,10 @@
         view === 'year' ? '#007bff' : 'transparent'
       yearBtn.style.border =
         view === 'year' ? '1px solid #007bff' : '1px solid #555'
+
+      // Show/hide month and year navigation
+      monthNavContainer.style.display = view === 'month' ? 'flex' : 'none'
+      yearNavContainer.style.display = view === 'year' ? 'flex' : 'none'
 
       // Get O counts for each day
       const dayTotals = {}
@@ -573,13 +650,40 @@
           })
         }
       } else if (view === 'month') {
-        // Current month - from day 1 to last day
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        // Current month (with offset) - from day 1 to last day
+        const targetDate = new Date(
+          now.getFullYear(),
+          now.getMonth() + selectedMonthOffset,
+          1
+        )
+        const firstDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth(),
+          1
+        )
+        const lastDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth() + 1,
+          0
+        )
         const daysInMonth = lastDay.getDate()
 
+        // Update month label and button states
+        monthLabel.innerText = targetDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        })
+        nextMonthBtn.disabled = selectedMonthOffset >= 0
+        nextMonthBtn.style.opacity = selectedMonthOffset >= 0 ? '0.5' : '1'
+        nextMonthBtn.style.cursor =
+          selectedMonthOffset >= 0 ? 'not-allowed' : 'pointer'
+
         for (let i = 1; i <= daysInMonth; i++) {
-          const date = new Date(now.getFullYear(), now.getMonth(), i)
+          const date = new Date(
+            targetDate.getFullYear(),
+            targetDate.getMonth(),
+            i
+          )
           const dayStr = date.toLocaleDateString('en-CA')
           data.push({
             date: dayStr,
@@ -588,15 +692,23 @@
           })
         }
       } else if (view === 'year') {
-        // Get month totals for current year
+        // Get month totals for selected year
+        const targetYear = now.getFullYear() + selectedYearOffset
         const monthTotals = {}
         Object.keys(dayTotals).forEach((dayStr) => {
           const date = new Date(dayStr)
-          if (date.getFullYear() === now.getFullYear()) {
+          if (date.getFullYear() === targetYear) {
             const month = date.getMonth()
             monthTotals[month] = (monthTotals[month] || 0) + dayTotals[dayStr]
           }
         })
+
+        // Update year label and button states
+        yearLabel.innerText = targetYear.toString()
+        nextYearBtn.disabled = selectedYearOffset >= 0
+        nextYearBtn.style.opacity = selectedYearOffset >= 0 ? '0.5' : '1'
+        nextYearBtn.style.cursor =
+          selectedYearOffset >= 0 ? 'not-allowed' : 'pointer'
 
         const monthNames = [
           'Jan',
@@ -614,7 +726,7 @@
         ]
         for (let i = 0; i < 12; i++) {
           data.push({
-            date: `${now.getFullYear()}-${i}`,
+            date: `${targetYear}-${i}`,
             count: monthTotals[i] || 0,
             label: monthNames[i],
           })
@@ -674,9 +786,45 @@
     }
 
     // Add button click handlers
-    weekBtn.addEventListener('click', () => renderChart('week'))
-    monthBtn.addEventListener('click', () => renderChart('month'))
-    yearBtn.addEventListener('click', () => renderChart('year'))
+    weekBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('week')
+    })
+    monthBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('month')
+    })
+    yearBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('year')
+    })
+
+    prevMonthBtn.addEventListener('click', () => {
+      selectedMonthOffset--
+      renderChart('month')
+    })
+
+    nextMonthBtn.addEventListener('click', () => {
+      if (selectedMonthOffset < 0) {
+        selectedMonthOffset++
+        renderChart('month')
+      }
+    })
+
+    prevYearBtn.addEventListener('click', () => {
+      selectedYearOffset--
+      renderChart('year')
+    })
+
+    nextYearBtn.addEventListener('click', () => {
+      if (selectedYearOffset < 0) {
+        selectedYearOffset++
+        renderChart('year')
+      }
+    })
 
     // Initial render
     renderChart('week')
@@ -755,6 +903,79 @@
     barsContainer.style.gap = '4px'
     chartContainer.appendChild(barsContainer)
 
+    // Create month navigation (initially hidden)
+    const monthNavContainer = document.createElement('div')
+    monthNavContainer.style.display = 'none'
+    monthNavContainer.style.justifyContent = 'center'
+    monthNavContainer.style.alignItems = 'center'
+    monthNavContainer.style.gap = '1rem'
+    monthNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(monthNavContainer)
+
+    const prevMonthBtn = document.createElement('button')
+    prevMonthBtn.innerText = '← Prev'
+    prevMonthBtn.style.padding = '0.25rem 0.75rem'
+    prevMonthBtn.style.cursor = 'pointer'
+    prevMonthBtn.style.border = '1px solid #555'
+    prevMonthBtn.style.backgroundColor = 'transparent'
+    prevMonthBtn.style.color = '#fff'
+    prevMonthBtn.style.borderRadius = '4px'
+    monthNavContainer.appendChild(prevMonthBtn)
+
+    const monthLabel = document.createElement('span')
+    monthLabel.style.fontSize = '1rem'
+    monthLabel.style.fontWeight = 'bold'
+    monthNavContainer.appendChild(monthLabel)
+
+    const nextMonthBtn = document.createElement('button')
+    nextMonthBtn.innerText = 'Next →'
+    nextMonthBtn.style.padding = '0.25rem 0.75rem'
+    nextMonthBtn.style.cursor = 'pointer'
+    nextMonthBtn.style.border = '1px solid #555'
+    nextMonthBtn.style.backgroundColor = 'transparent'
+    nextMonthBtn.style.color = '#fff'
+    nextMonthBtn.style.borderRadius = '4px'
+    monthNavContainer.appendChild(nextMonthBtn)
+
+    // Create year navigation (initially hidden)
+    const yearNavContainer = document.createElement('div')
+    yearNavContainer.style.display = 'none'
+    yearNavContainer.style.justifyContent = 'center'
+    yearNavContainer.style.alignItems = 'center'
+    yearNavContainer.style.gap = '1rem'
+    yearNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(yearNavContainer)
+
+    const prevYearBtn = document.createElement('button')
+    prevYearBtn.innerText = '\u2190 Prev'
+    prevYearBtn.style.padding = '0.25rem 0.75rem'
+    prevYearBtn.style.cursor = 'pointer'
+    prevYearBtn.style.border = '1px solid #555'
+    prevYearBtn.style.backgroundColor = 'transparent'
+    prevYearBtn.style.color = '#fff'
+    prevYearBtn.style.borderRadius = '4px'
+    yearNavContainer.appendChild(prevYearBtn)
+
+    const yearLabel = document.createElement('span')
+    yearLabel.style.fontSize = '1rem'
+    yearLabel.style.fontWeight = 'bold'
+    yearNavContainer.appendChild(yearLabel)
+
+    const nextYearBtn = document.createElement('button')
+    nextYearBtn.innerText = 'Next \u2192'
+    nextYearBtn.style.padding = '0.25rem 0.75rem'
+    nextYearBtn.style.cursor = 'pointer'
+    nextYearBtn.style.border = '1px solid #555'
+    nextYearBtn.style.backgroundColor = 'transparent'
+    nextYearBtn.style.color = '#fff'
+    nextYearBtn.style.borderRadius = '4px'
+    yearNavContainer.appendChild(nextYearBtn)
+
+    // Track selected month (0 = current month, -1 = prev month, etc.)
+    let selectedMonthOffset = 0
+    // Track selected year (0 = current year, -1 = prev year, etc.)
+    let selectedYearOffset = 0
+
     // Function to format duration
     function formatDuration(seconds) {
       const hours = Math.floor(seconds / 3600)
@@ -784,6 +1005,10 @@
         view === 'year' ? '#28a745' : 'transparent'
       yearBtn.style.border =
         view === 'year' ? '1px solid #28a745' : '1px solid #555'
+
+      // Show/hide month and year navigation
+      monthNavContainer.style.display = view === 'month' ? 'flex' : 'none'
+      yearNavContainer.style.display = view === 'year' ? 'flex' : 'none'
 
       // Get watch time for each day
       const dayTotals = {}
@@ -825,13 +1050,40 @@
           })
         }
       } else if (view === 'month') {
-        // Current month - from day 1 to last day
-        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        // Current month (with offset) - from day 1 to last day
+        const targetDate = new Date(
+          now.getFullYear(),
+          now.getMonth() + selectedMonthOffset,
+          1
+        )
+        const firstDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth(),
+          1
+        )
+        const lastDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth() + 1,
+          0
+        )
         const daysInMonth = lastDay.getDate()
 
+        // Update month label and button states
+        monthLabel.innerText = targetDate.toLocaleDateString('en-US', {
+          month: 'long',
+          year: 'numeric',
+        })
+        nextMonthBtn.disabled = selectedMonthOffset >= 0
+        nextMonthBtn.style.opacity = selectedMonthOffset >= 0 ? '0.5' : '1'
+        nextMonthBtn.style.cursor =
+          selectedMonthOffset >= 0 ? 'not-allowed' : 'pointer'
+
         for (let i = 1; i <= daysInMonth; i++) {
-          const date = new Date(now.getFullYear(), now.getMonth(), i)
+          const date = new Date(
+            targetDate.getFullYear(),
+            targetDate.getMonth(),
+            i
+          )
           const dayStr = date.toLocaleDateString('en-CA')
           data.push({
             date: dayStr,
@@ -840,15 +1092,23 @@
           })
         }
       } else if (view === 'year') {
-        // Get month totals for current year
+        // Get month totals for selected year
+        const targetYear = now.getFullYear() + selectedYearOffset
         const monthTotals = {}
         Object.keys(dayTotals).forEach((dayStr) => {
           const date = new Date(dayStr)
-          if (date.getFullYear() === now.getFullYear()) {
+          if (date.getFullYear() === targetYear) {
             const month = date.getMonth()
             monthTotals[month] = (monthTotals[month] || 0) + dayTotals[dayStr]
           }
         })
+
+        // Update year label and button states
+        yearLabel.innerText = targetYear.toString()
+        nextYearBtn.disabled = selectedYearOffset >= 0
+        nextYearBtn.style.opacity = selectedYearOffset >= 0 ? '0.5' : '1'
+        nextYearBtn.style.cursor =
+          selectedYearOffset >= 0 ? 'not-allowed' : 'pointer'
 
         const monthNames = [
           'Jan',
@@ -866,7 +1126,7 @@
         ]
         for (let i = 0; i < 12; i++) {
           data.push({
-            date: `${now.getFullYear()}-${i}`,
+            date: `${targetYear}-${i}`,
             duration: monthTotals[i] || 0,
             label: monthNames[i],
           })
@@ -930,9 +1190,45 @@
     }
 
     // Add button click handlers
-    weekBtn.addEventListener('click', () => renderChart('week'))
-    monthBtn.addEventListener('click', () => renderChart('month'))
-    yearBtn.addEventListener('click', () => renderChart('year'))
+    weekBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('week')
+    })
+    monthBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('month')
+    })
+    yearBtn.addEventListener('click', () => {
+      selectedMonthOffset = 0
+      selectedYearOffset = 0
+      renderChart('year')
+    })
+
+    prevMonthBtn.addEventListener('click', () => {
+      selectedMonthOffset--
+      renderChart('month')
+    })
+
+    nextMonthBtn.addEventListener('click', () => {
+      if (selectedMonthOffset < 0) {
+        selectedMonthOffset++
+        renderChart('month')
+      }
+    })
+
+    prevYearBtn.addEventListener('click', () => {
+      selectedYearOffset--
+      renderChart('year')
+    })
+
+    nextYearBtn.addEventListener('click', () => {
+      if (selectedYearOffset < 0) {
+        selectedYearOffset++
+        renderChart('year')
+      }
+    })
 
     // Initial render
     renderChart('week')
