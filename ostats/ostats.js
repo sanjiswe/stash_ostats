@@ -521,6 +521,40 @@
     barsContainer.style.gap = '4px'
     chartContainer.appendChild(barsContainer)
 
+    // Create week navigation (initially visible)
+    const weekNavContainer = document.createElement('div')
+    weekNavContainer.style.display = 'flex'
+    weekNavContainer.style.justifyContent = 'center'
+    weekNavContainer.style.alignItems = 'center'
+    weekNavContainer.style.gap = '1rem'
+    weekNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(weekNavContainer)
+
+    const prevWeekBtn = document.createElement('button')
+    prevWeekBtn.innerText = '← Prev'
+    prevWeekBtn.style.padding = '0.25rem 0.75rem'
+    prevWeekBtn.style.cursor = 'pointer'
+    prevWeekBtn.style.border = '1px solid #555'
+    prevWeekBtn.style.backgroundColor = 'transparent'
+    prevWeekBtn.style.color = '#fff'
+    prevWeekBtn.style.borderRadius = '4px'
+    weekNavContainer.appendChild(prevWeekBtn)
+
+    const weekLabel = document.createElement('span')
+    weekLabel.style.fontSize = '1rem'
+    weekLabel.style.fontWeight = 'bold'
+    weekNavContainer.appendChild(weekLabel)
+
+    const nextWeekBtn = document.createElement('button')
+    nextWeekBtn.innerText = 'Next →'
+    nextWeekBtn.style.padding = '0.25rem 0.75rem'
+    nextWeekBtn.style.cursor = 'pointer'
+    nextWeekBtn.style.border = '1px solid #555'
+    nextWeekBtn.style.backgroundColor = 'transparent'
+    nextWeekBtn.style.color = '#fff'
+    nextWeekBtn.style.borderRadius = '4px'
+    weekNavContainer.appendChild(nextWeekBtn)
+
     // Create month navigation (initially hidden)
     const monthNavContainer = document.createElement('div')
     monthNavContainer.style.display = 'none'
@@ -589,6 +623,8 @@
     nextYearBtn.style.borderRadius = '4px'
     yearNavContainer.appendChild(nextYearBtn)
 
+    // Track selected week (0 = current week, -1 = prev week, etc.)
+    let selectedWeekOffset = 0
     // Track selected month (0 = current month, -1 = prev month, etc.)
     let selectedMonthOffset = 0
     // Track selected year (0 = current year, -1 = prev year, etc.)
@@ -610,7 +646,8 @@
       yearBtn.style.border =
         view === 'year' ? '1px solid #007bff' : '1px solid #555'
 
-      // Show/hide month and year navigation
+      // Show/hide week, month and year navigation
+      weekNavContainer.style.display = view === 'week' ? 'flex' : 'none'
       monthNavContainer.style.display = view === 'month' ? 'flex' : 'none'
       yearNavContainer.style.display = view === 'year' ? 'flex' : 'none'
 
@@ -630,12 +667,31 @@
       let data = []
 
       if (view === 'week') {
-        // Get Monday of current week
+        // Get Monday of selected week (current week + offset)
         const dayOfWeek = now.getDay()
         const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek // Adjust to Monday
         const monday = new Date(now)
-        monday.setDate(now.getDate() + diff)
+        monday.setDate(now.getDate() + diff + selectedWeekOffset * 7)
         monday.setHours(0, 0, 0, 0)
+
+        // Update week label
+        const sunday = new Date(monday)
+        sunday.setDate(monday.getDate() + 6)
+        const mondayStr = monday.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })
+        const sundayStr = sunday.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })
+        weekLabel.innerText = `${mondayStr} - ${sundayStr}`
+
+        // Disable next button if viewing current week
+        nextWeekBtn.disabled = selectedWeekOffset >= 0
+        nextWeekBtn.style.opacity = selectedWeekOffset >= 0 ? '0.5' : '1'
+        nextWeekBtn.style.cursor =
+          selectedWeekOffset >= 0 ? 'not-allowed' : 'pointer'
 
         for (let i = 0; i < 7; i++) {
           const date = new Date(monday)
@@ -787,19 +843,34 @@
 
     // Add button click handlers
     weekBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('week')
     })
     monthBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('month')
     })
     yearBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('year')
+    })
+
+    prevWeekBtn.addEventListener('click', () => {
+      selectedWeekOffset--
+      renderChart('week')
+    })
+
+    nextWeekBtn.addEventListener('click', () => {
+      if (selectedWeekOffset < 0) {
+        selectedWeekOffset++
+        renderChart('week')
+      }
     })
 
     prevMonthBtn.addEventListener('click', () => {
@@ -903,6 +974,40 @@
     barsContainer.style.gap = '4px'
     chartContainer.appendChild(barsContainer)
 
+    // Create week navigation (initially visible)
+    const weekNavContainer = document.createElement('div')
+    weekNavContainer.style.display = 'flex'
+    weekNavContainer.style.justifyContent = 'center'
+    weekNavContainer.style.alignItems = 'center'
+    weekNavContainer.style.gap = '1rem'
+    weekNavContainer.style.marginTop = '0.5rem'
+    chartContainer.appendChild(weekNavContainer)
+
+    const prevWeekBtn = document.createElement('button')
+    prevWeekBtn.innerText = '← Prev'
+    prevWeekBtn.style.padding = '0.25rem 0.75rem'
+    prevWeekBtn.style.cursor = 'pointer'
+    prevWeekBtn.style.border = '1px solid #555'
+    prevWeekBtn.style.backgroundColor = 'transparent'
+    prevWeekBtn.style.color = '#fff'
+    prevWeekBtn.style.borderRadius = '4px'
+    weekNavContainer.appendChild(prevWeekBtn)
+
+    const weekLabel = document.createElement('span')
+    weekLabel.style.fontSize = '1rem'
+    weekLabel.style.fontWeight = 'bold'
+    weekNavContainer.appendChild(weekLabel)
+
+    const nextWeekBtn = document.createElement('button')
+    nextWeekBtn.innerText = 'Next →'
+    nextWeekBtn.style.padding = '0.25rem 0.75rem'
+    nextWeekBtn.style.cursor = 'pointer'
+    nextWeekBtn.style.border = '1px solid #555'
+    nextWeekBtn.style.backgroundColor = 'transparent'
+    nextWeekBtn.style.color = '#fff'
+    nextWeekBtn.style.borderRadius = '4px'
+    weekNavContainer.appendChild(nextWeekBtn)
+
     // Create month navigation (initially hidden)
     const monthNavContainer = document.createElement('div')
     monthNavContainer.style.display = 'none'
@@ -971,6 +1076,8 @@
     nextYearBtn.style.borderRadius = '4px'
     yearNavContainer.appendChild(nextYearBtn)
 
+    // Track selected week (0 = current week, -1 = prev week, etc.)
+    let selectedWeekOffset = 0
     // Track selected month (0 = current month, -1 = prev month, etc.)
     let selectedMonthOffset = 0
     // Track selected year (0 = current year, -1 = prev year, etc.)
@@ -1006,7 +1113,8 @@
       yearBtn.style.border =
         view === 'year' ? '1px solid #28a745' : '1px solid #555'
 
-      // Show/hide month and year navigation
+      // Show/hide week, month and year navigation
+      weekNavContainer.style.display = view === 'week' ? 'flex' : 'none'
       monthNavContainer.style.display = view === 'month' ? 'flex' : 'none'
       yearNavContainer.style.display = view === 'year' ? 'flex' : 'none'
 
@@ -1030,12 +1138,31 @@
       let data = []
 
       if (view === 'week') {
-        // Get Monday of current week
+        // Get Monday of selected week (current week + offset)
         const dayOfWeek = now.getDay()
         const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
         const monday = new Date(now)
-        monday.setDate(now.getDate() + diff)
+        monday.setDate(now.getDate() + diff + selectedWeekOffset * 7)
         monday.setHours(0, 0, 0, 0)
+
+        // Update week label
+        const sunday = new Date(monday)
+        sunday.setDate(monday.getDate() + 6)
+        const mondayStr = monday.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })
+        const sundayStr = sunday.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        })
+        weekLabel.innerText = `${mondayStr} - ${sundayStr}`
+
+        // Disable next button if viewing current week
+        nextWeekBtn.disabled = selectedWeekOffset >= 0
+        nextWeekBtn.style.opacity = selectedWeekOffset >= 0 ? '0.5' : '1'
+        nextWeekBtn.style.cursor =
+          selectedWeekOffset >= 0 ? 'not-allowed' : 'pointer'
 
         for (let i = 0; i < 7; i++) {
           const date = new Date(monday)
@@ -1191,19 +1318,34 @@
 
     // Add button click handlers
     weekBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('week')
     })
     monthBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('month')
     })
     yearBtn.addEventListener('click', () => {
+      selectedWeekOffset = 0
       selectedMonthOffset = 0
       selectedYearOffset = 0
       renderChart('year')
+    })
+
+    prevWeekBtn.addEventListener('click', () => {
+      selectedWeekOffset--
+      renderChart('week')
+    })
+
+    nextWeekBtn.addEventListener('click', () => {
+      if (selectedWeekOffset < 0) {
+        selectedWeekOffset++
+        renderChart('week')
+      }
     })
 
     prevMonthBtn.addEventListener('click', () => {
@@ -1356,6 +1498,7 @@
     const rowTwo = document.createElement('div')
     rowTwo.classList = 'custom-stats-row col col-sm-8 m-sm-auto row stats'
     rowTwo.style.justifyContent = 'center'
+    rowTwo.style.gap = '1rem'
     rowTwo.style.paddingTop = '2rem'
     el.insertBefore(rowTwo, changelog)
     const rowThree = document.createElement('div')
@@ -1382,7 +1525,7 @@
     await createLongestWatchedDay(rowOne)
     await createMostOScene(rowTwo)
     await createLongestWatchedScene(rowTwo)
-    await createMostOImage(rowTwo)
+    // await createMostOImage(rowTwo)
     await createMostRecentOScene(rowTwo)
     await createOldestOScene(rowTwo)
     await createWeeklyBarChart(rowThree)
